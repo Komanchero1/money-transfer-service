@@ -1,0 +1,16 @@
+
+
+version: '3'
+services:
+  spring-app:
+    image: your-spring-app-image
+    ports:
+      - "8080:8080"
+
+  rest-front:
+    image: your-rest-front-image
+    ports:
+      - "5500:5500"
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
