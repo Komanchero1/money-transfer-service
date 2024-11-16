@@ -12,7 +12,7 @@ public class ApiService {
     }
 
     public String getDataFromRestFront() {
-        String url = "https://serp-ya.github.io/card-transfer/api"; // Укажите нужный URL
+        String url = "https://serp-ya.github.io/card-transfer/api"; // нужный URL
         return restTemplate.getForObject(url, String.class);
     }
 }
