@@ -19,66 +19,76 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
+
+//тестовый класс для проверки функциональности класса TransferService
 public class TransferServiceTest {
 
-    @Mock
-    private TransferRepository transferRepository;
+    @Mock // аннотация указывает что буден создан мок объект для имитации объекта TransferRepository
+    private TransferRepository transferRepository; // для хранения мок объекта
 
-    @InjectMocks
-    private TransferService transferService;
+    @InjectMocks //Аннотация,укказывающая что булет создан экземпляр класса TransferService с автоматическим внедрением в него мок-объекта
+    private TransferService transferService; //для хранения экземпляра тестируемого сервиса
 
-    @BeforeEach
+    @BeforeEach //Аннотация, указывающая, что метод setUp будет выполняться перед каждым тестом
+    //метод инициализирующий мок-объектоы, аннотированные в текущем классе
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
+    @Test //указывает что метод тестовый
+    //тестирование метода InitiateTransfer из класса TransferService
     void testInitiateTransfer() {
-        Transfer transfer = new Transfer();
-        transfer.setCardFromNumber("1234567812345678");
-        transfer.setCardToNumber("8765432187654321");
-        transfer.setAmount(new Amount(100));
+        Transfer transfer = new Transfer(); //создание объекта Transfer
+        transfer.setCardFromNumber("1234567812345678");//устанавливается номер карты отправителя
+        transfer.setCardToNumber("8765432187654321");//устанавливается номер карты получателя
+        transfer.setAmount(new Amount(100));//устанавливается сумма перевода
 
-        String transferId = "transfer123";
-        when(transferRepository.addTransfer(transfer)).thenReturn(transferId);
+        String transferId = "transfer123";//устанавливается индентификатор перевода
 
+        //настройка поведения мок-объекта transferRepository
+        when(transferRepository.addTransfer(transfer)).thenReturn(transferId);//при вызове метода addTransfer с аргументом transfer, он должен вернуть transferId
+
+        //вызывается метод initiateTransfer и результат записывается в переменную
         String result = transferService.initiateTransfer(transfer);
 
-        assertEquals(transferId, result);
+        assertEquals(transferId, result);//сравнивается ожидаемый и фактический результат
+        //проверка, что метод addTransfer был вызван ровно один раз с аргументом transfer на мок-объекте transferRepository
         verify(transferRepository, times(1)).addTransfer(transfer);
     }
 
     @Test
+        //тестирование метода ConfirmTransfer из класса TransferService
     void testConfirmTransfer() {
-        String transferId = "transfer123";
-
-        // Создаем Transfer и инициализируем Amount
-        Transfer transfer = new Transfer();
-        transfer.setCardFromNumber("1234567812345678");
-        transfer.setCardToNumber("8765432187654321");
+        String transferId = "transfer123";//устанавливается индентификатор операции
+        Transfer transfer = new Transfer();// создается объект Transfer
+        transfer.setCardFromNumber("1234567812345678");//устанавливается номер карты отправителя
+        transfer.setCardToNumber("8765432187654321");//устанавливается номер карты получателя
         transfer.setAmount(new Amount(100));  // Инициализация Amount
 
-        // Настройка мок-объекта
+        // настраивается  поведения мок-объекта при вызове confirmOperation возвращается индентификатор операции
         when(transferRepository.confirmOperation(transferId)).thenReturn(transfer);
 
-        // Вызов метода
+        // вызывается метод confirmTransfer результат сохраняется в переменную
         Transfer result = transferService.confirmTransfer(transferId);
 
-        // Проверка результатов
-        assertNotNull(result);
-        assertEquals(transfer, result);  // Проверяем, что результат равен ожидаемому
+        assertNotNull(result);//проверяется что результат не равен null
+        assertEquals(transfer, result);  // Проверяется, что результат равен ожидаемому
+        //Проверяется, что метод confirmOperation был вызван ровно один раз с аргументом transferId на мок-объекте transferRepository
         verify(transferRepository, times(1)).confirmOperation(transferId);
     }
 
     @Test
+    //тестирование метода GetTransferState из класса TransferService
     void testGetTransferState() {
-        String transferId = "transfer123";
-        TransferState state = TransferState.OK;
+        String transferId = "transfer123"; //устанавливается индентификатор операции
+        TransferState state = TransferState.OK;//устанавливается статус операции
+        //настраивается поведение мок объекта при вызове getTransferState возвращается статус операции
         when(transferRepository.getTransferState(transferId)).thenReturn(state);
 
-        TransferState result = transferService.getTransferState(transferId);
+        TransferState result = transferService.getTransferState(transferId);//вызывается тестируемый метод и сохраняется в переменную
 
-        assertEquals(state, result);
+        assertEquals(state, result);//проверяется что возвращенное состояние result соответствует ожидаемому состоянию state
+        //проверяется что метод getTransferState был вызван ровно один раз с аргументом transferId на мок-объекте transferRepository
         verify(transferRepository, times(1)).getTransferState(transferId);
     }
 }

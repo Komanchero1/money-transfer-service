@@ -11,71 +11,92 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest //аннотация указывает, что класс является интеграционным тестом Spring Boot
+@AutoConfigureMockMvc //позволяет тестировать контроллеры в изолированной среде
+//класс для интеграционного тестирования TransferController
 public class TransferIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired  //аннотация, указывающая, что Spring должен автоматически внедрить зависимость - экземпляр MockMvc
+    private MockMvc mockMvc;//для хранения объекта MockMvc который будет использоваться для выполнения HTTP-запросов в тестах
 
 
 
-    @Test
+    @Test//аннотация, указывающая, что метод testTransferMoneyIntegration является тестовым методом
+    //тест метода testTransferMoneyIntegration
     void testTransferMoneyIntegration() throws Exception {
+        //выполняется POST-запрос к URL /transfer к контроллеру
         mockMvc.perform(post("/transfer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"cardFromNumber\":\"1234567812345678\",\"cardFromValidTill\":\"12/25\",\"cardFromCVV\":\"123\",\"cardToNumber\":\"8765432187654321\",\"amount\":{\"value\":100}}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.operationId").exists());
+                        .contentType(MediaType.APPLICATION_JSON)//указывает, что содержимое запроса будет в формате JSON
+                        .content("{\"cardFromNumber\":\"1234567812345678\"," +
+                                "\"cardFromValidTill\":\"12/25\"," +
+                                "\"cardFromCVV\":\"123\"," +
+                                "\"cardToNumber\":\"8765432187654321\"," +
+                                "\"amount\":{\"value\":100}}"))//добавляется тело запроса в формате JSON, представляющее данные перевода
+                .andExpect(status().isOk())//проверяется, что статус ответа равен 200 (OK)
+                .andExpect(jsonPath("$.operationId")
+                        .exists());//проверяется, что в ответе существует поле operationId, что указывает на успешное создание перевода
     }
 
     @Test
+    //Тест метода testConfirmOperation
     void testConfirmOperationIntegration() throws Exception {
-        // Инициализируем массив для хранения ID
+        // инициализируется массив для хранения transferId чтобы менять значение индентификатора внутри лямбда-выражения
         final String[] transferId = new String[1];
 
-        // Сначала инициируем перевод
+        // выполняется POST-запрос к URL /transfer, который предназначен для инициации перевода.
         mockMvc.perform(post("/transfer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"cardFromNumber\":\"1234567812345678\",\"cardFromValidTill\":\"12/25\",\"cardFromCVV\":\"123\",\"cardToNumber\":\"8765432187654321\",\"amount\":{\"value\":100}}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.operationId").exists()) // Убедитесь, что ID существует
+                        .contentType(MediaType.APPLICATION_JSON)//указывает, что содержимое запроса будет в формате JSON
+                        .content("{\"cardFromNumber\":\"1234567812345678\"," +
+                                "\"cardFromValidTill\":\"12/25\"," +
+                                "\"cardFromCVV\":\"123\"," +
+                                "\"cardToNumber\":\"8765432187654321\"," +
+                                "\"amount\":{\"value\":100}}"))//указывается тело запроса, которое будет отправлено на сервер
+                .andExpect(status().isOk())//проверяется, что статус ответа равен 200 (OK)
+                .andExpect(jsonPath("$.operationId").exists()) // проверяется, что в ответе существует поле operationId, успешное создание перевода
                 .andDo(result -> {
-                    // Извлекаем ID из результата
+                    // извлечение значения поля operationId из тела ответа с помощью библиотеки JsonPath
                     transferId[0] = JsonPath.read(result.getResponse().getContentAsString(), "$.operationId");
                 });
 
-        // Теперь подтверждаем операцию
+        // выполняется POST-запрос к контроллеру по URL /transfer/confirmOperation, который предназначен для подтверждения операции перевода
         mockMvc.perform(post("/transfer/confirmOperation")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"operationId\":\"" + transferId[0] + "\",\"code\":\"123456\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.operationId").value(transferId[0])); // Используем динамически полученный ID
+                        .contentType(MediaType.APPLICATION_JSON)//указывает, что содержимое запроса будет в формате JSON
+                        .content("{\"operationId\":\"" + transferId[0] +
+                                "\",\"code\":\"123456\"}"))//данные для подтверждения операции
+                .andExpect(status().isOk())//проверяется, что статус ответа равен 200 (OK)
+                .andExpect(jsonPath("$.operationId").value(transferId[0])); //проверяется, что поле operationId в ответе соответствует
     }
 
     @Test
+    //ест метода testGetTransferState
     void testGetTransferStateIntegration() throws Exception {
-        // Инициализируем перевод
+        //выполняется POST-запрос к URL /transfer к контроллеру
         mockMvc.perform(post("/transfer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"cardFromNumber\":\"1234567812345678\",\"cardFromValidTill\":\"12/25\",\"cardFromCVV\":\"123\",\"cardToNumber\":\"8765432187654321\",\"amount\":{\"value\":100}}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.operationId").exists()) // Убедитесь, что ID существует
+                        .contentType(MediaType.APPLICATION_JSON)//указывает, что содержимое запроса будет в формате JSON
+                        .content("{\"cardFromNumber\":\"1234567812345678\"," +
+                                "\"cardFromValidTill\":\"12/25\"," +
+                                "\"cardFromCVV\":\"123\"," +
+                                "\"cardToNumber\":\"8765432187654321\"," +
+                                "\"amount\":{\"value\":100}}"))//добавляется тело запроса в формате JSON, представляющее данные перевода
+                .andExpect(status().isOk())//проверяется, что статус ответа от сервера равен 200 (OK) запрос был успешно обработан
+                .andExpect(jsonPath("$.operationId").exists()) //проверяется, что в ответе существует поле operationId, перевод успешен
                 .andDo(result -> {
-                    // Извлекаем ID из результата
+                    // извлечение значения поля operationId из тела ответа с помощью библиотеки JsonPath
                     String transferId = JsonPath.read(result.getResponse().getContentAsString(), "$.operationId");
 
-                    // Подтверждаем операцию
+                    // выполняется POST-запроса к контроллеру по URL /transfer/confirmOperation, который предназначен для подтверждения операции перевода
                     mockMvc.perform(post("/transfer/confirmOperation")
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"operationId\":\"" + transferId + "\",\"code\":\"123456\"}"))
-                            .andExpect(status().isOk())
-                            .andExpect(jsonPath("$.operationId").value(transferId));
+                                    .contentType(MediaType.APPLICATION_JSON)//указывает, что содержимое запроса будет в формате JSON
+                                    .content("{\"operationId\":\"" +
+                                            transferId + "\",\"code\":\"123456\"}"))//данные для подтверждения операции
+                            .andExpect(status().isOk())//проверяется, что статус ответа равен 200 (OK)
+                            .andExpect(jsonPath("$.operationId")
+                                    .value(transferId));//проверяется, что поле operationId в ответе соответствует идентификатору transferId, который был получен ранее
 
-                    // Теперь проверяем состояние перевода
+                    // выполняется GET-запрос к контроллеру по URL /transfer/state/{id}, подставляя transferId вместо {id}
                     mockMvc.perform(get("/transfer/state/{id}", transferId))
-                            .andExpect(status().isOk())
-                            .andExpect(content().json("\"OK\"")); // Проверяем состояние как JSON
+                            .andExpect(status().isOk())//проверяется, что статус ответа равен 200 (OK)
+                            .andExpect(content().json("\"OK\"")); //проверяется, что содержимое ответа соответствует строке "OK", что указывает на успешное состояние перевода
                 });
     }
 

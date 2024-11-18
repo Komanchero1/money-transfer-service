@@ -9,47 +9,48 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Repository
+@Repository // помечен как репозиторий и отвечает за управление операциями с переводами
 public class TransferRepository {
-    private final ConcurrentHashMap<String, TransferState> transferStateMap;
-    private final ConcurrentHashMap<String, Transfer> transferList;
-    private final AtomicInteger id;
-    private final Logger logger; // Логгер для логирования
+    private final ConcurrentHashMap<String, TransferState> transferStateMap; //для хранения состояния переводов
+    private final ConcurrentHashMap<String, Transfer> transferList; //для хранения объектов трансфер
+    private final AtomicInteger id;//для генерации уникальных идентификаторов переводов, обеспечивает атомарные операции инкремента
+    private final Logger logger; // для логирования
 
     public TransferRepository() {
-        this.transferStateMap = new ConcurrentHashMap<>();
-        this.transferList = new ConcurrentHashMap<>();
-        this.id = new AtomicInteger(0);
+        this.transferStateMap = new ConcurrentHashMap<>(); //инициализируется коллекция для хранения состояний переводов
+        this.transferList = new ConcurrentHashMap<>(); //инициализируется коллекция для хранения объектов переводов
+        this.id = new AtomicInteger(0); //инициализируется счетчик идентификаторов переводов с начальным значением 0
         this.logger = LoggerImpl.getInstance(); // Получаем экземпляр логгера
     }
 
-    public String addTransfer(Transfer transfer) {
-        String transferId = String.valueOf(id.incrementAndGet());
-        transferStateMap.putIfAbsent(transferId, TransferState.LOAD);
-        transferList.put(transferId, transfer);
+    //метод для добавления перевода
+    public String addTransfer(Transfer transfer) { //принимает объект Transfer в качестве аргумента
+        String transferId = String.valueOf(id.incrementAndGet()); //генерируется уникальный индентификатор
+        transferStateMap.putIfAbsent(transferId, TransferState.LOAD); //добавляется новое состояние перевода в коллекцию состояний
+        transferList.put(transferId, transfer);//сохраняется объект перевода в коллекцию переводов с использованием сгенерированного идентификатора
         logger.log("Перевод добавлен: ID = " + transferId + ", с карты № " + transfer.getCardFromNumber() +
-                ", на карту № " + transfer.getCardToNumber() + ", сумма " + transfer.getAmount().getValue());
-        return transferId;
+                ", на карту № " + transfer.getCardToNumber() + ", сумма " + transfer.getAmount().getValue()); //записывается сообщение о добавлении перевода в лог
+        return transferId; //возвращает его идентификатор
     }
 
-
+    //метод для подтверждения перевода по его индентификатору
     public Transfer confirmOperation(String id) {
-        TransferState currentState = transferStateMap.get(id);
-        if (currentState == null) {
-            logger.log("Не удалось подтвердить операцию ,перевод с данным № " + id + " не найден ");
-            return null; // Не существует перевода с таким ID
+        TransferState currentState = transferStateMap.get(id);//получение текущего состояния перевода по идентификатору
+        if (currentState == null) {// если объекта с таким индентификатором нет
+            logger.log("Не удалось подтвердить операцию ,перевод с данным № " + id + " не найден ");//логируется сообщение об ошибке
+            return null; // возвращается null
         }
-        // Изменяем состояние на OK
+        // изменяется состояние на OK
         transferStateMap.put(id, TransferState.OK);
-        logger.log("Операция подтверждена,ID №" + id); // Логируем подтверждение
-        return transferList.get(id);
+        logger.log("Операция подтверждена,ID №" + id); // логируется подтверждение операции
+        return transferList.get(id);//возвращается объект Transfer, соответствующий идентификатору
     }
 
 
-
+    //метод для получения состояния перевода  по его идентификатору
     public TransferState getTransferState(String id) {
-        TransferState state = transferStateMap.get(id);
-        logger.log("перевод ID № " + id + ", статус  " + state); // Логируем получение состояния
-        return state;
+        TransferState state = transferStateMap.get(id);//получается состояние перевода по идентификатору
+        logger.log("перевод ID № " + id + ", статус  " + state); // логируется полученное состояние перевода, указывается идентификатор и текущее состояние
+        return state; //возвращается состояние перевода
     }
 }
