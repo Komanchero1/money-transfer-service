@@ -3,15 +3,15 @@
 version: '3'
 services:
   spring-app:
-    image: your-spring-app-image
+    image: money_transfer
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "localhost:5500"
+    networks:
+      - backend
 
-  rest-front:
-    image: your-rest-front-image
-    ports:
-      - "5500:5500"
-
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
+networks:
+  backend:
+    driver: bridge
 
